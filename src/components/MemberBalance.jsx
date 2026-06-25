@@ -1,39 +1,44 @@
 import { fmtMoney } from '../utils/helpers'
+import { ArrowUpRight, ArrowDownRight, CheckCircle2 } from 'lucide-react'
 
 // shows one member's balance - green if positive, red if negative
 function MemberBalance({ member, amount }) {
   const rounded = Math.round(amount * 100) / 100
 
-  let statusClass = 'text-text-muted font-medium'
-  let icon = '✓'
-  let label = 'settled up'
+  let statusClass = 'text-white/40'
+  let Icon = CheckCircle2
+  let label = 'Settled Up'
   let displayAmt = ''
+  let bgClass = 'bg-white/5'
 
   if (rounded > 0.01) {
-    statusClass = 'text-[#00b894] font-semibold'
-    icon = '↑'
-    label = 'gets back'
+    statusClass = 'text-success'
+    Icon = ArrowUpRight
+    label = 'Gets Back'
     displayAmt = fmtMoney(rounded)
+    bgClass = 'bg-success/10 border-success/20'
   } else if (rounded < -0.01) {
-    statusClass = 'text-[#e17055] font-semibold'
-    icon = '↓'
-    label = 'owes'
+    statusClass = 'text-danger'
+    Icon = ArrowDownRight
+    label = 'Owes'
     displayAmt = fmtMoney(Math.abs(rounded))
+    bgClass = 'bg-danger/10 border-danger/20'
   }
 
   return (
-    <div className="flex justify-between items-center bg-card border border-border p-3 px-4 rounded-xl mb-2">
-      <div className="flex items-center gap-3">
-        <div className="w-[38px] h-[38px] rounded-full bg-primary text-white flex justify-center items-center font-bold text-lg">
+    <div className={`flex justify-between items-center card border p-4 ${bgClass}`}>
+      <div className="flex items-center gap-4">
+        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent border border-white/20 text-white flex justify-center items-center font-bold text-sm shadow-inner">
           {member.charAt(0).toUpperCase()}
         </div>
-        <span className="font-semibold text-text text-[15px]">{member}</span>
+        <span className="font-bold text-white text-[15px]">{member}</span>
       </div>
-      <div className={`text-[13px] ${statusClass}`}>
-        {rounded === 0 ? (
-          <span>{label} {icon}</span>
-        ) : (
-          <span>{icon} {label} {displayAmt}</span>
+      <div className={`flex flex-col items-end ${statusClass}`}>
+        <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider mb-1">
+          {label} <Icon size={14} strokeWidth={3} />
+        </div>
+        {rounded !== 0 && (
+          <span className="font-display font-bold text-lg">{displayAmt}</span>
         )}
       </div>
     </div>

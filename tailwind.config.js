@@ -7,17 +7,35 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+        display: ['"Outfit"', 'sans-serif'],
+      },
       colors: {
-        background: '#1e1e2e',
-        card: '#242436',
-        'card-hover': '#2a2a3f',
-        primary: '#6c5ce7',
-        'primary-light': '#a29bfe',
-        text: '#f8f8f2',
-        'text-muted': '#a0a0b0',
-        border: '#36364a',
-        danger: '#ff5252',
-        success: '#4caf50'
+        background: '#000000',
+        card: '#0a0a0a',
+        'card-hover': '#111111',
+        primary: '#FF4F00',
+        'primary-light': '#FF7A3D',
+        accent: '#8b5cf6',
+        text: '#ffffff',
+        'text-muted': '#888888',
+        border: '#1f1f1f',
+        danger: '#ff3333',
+        success: '#00cc66'
+      },
+      backgroundImage: {
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+        'glass-gradient': 'linear-gradient(to right bottom, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01))',
+      },
+      animation: {
+        'float': 'float 6s ease-in-out infinite',
+      },
+      keyframes: {
+        float: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-10px)' },
+        }
       }
     },
   },

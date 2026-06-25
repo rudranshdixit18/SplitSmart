@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { Home, Plus, History } from 'lucide-react';
 
-// bottom nav bar - mobile app style
+// floating dock style bottom nav
 function Nav() {
   const router = useRouter();
   const path = router.pathname;
@@ -12,26 +13,27 @@ function Nav() {
   const isHistory = path.includes('/history');
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 h-[65px] bg-card border-t border-border flex justify-around items-center px-2 z-50 sm:rounded-none">
-      <Link href="/" className={`flex flex-col items-center justify-center w-full h-full text-text-muted transition-colors ${isHome && !isAdd ? 'text-primary' : ''}`}>
-        <span className="text-xl mb-1">🏠</span>
-        <span className="text-xs font-medium">Home</span>
+    <nav className="bottom-nav">
+      <Link href="/" className={`nav-item ${isHome && !isAdd ? 'active' : ''}`}>
+        <Home size={20} className="mb-1" />
+        <span className="text-[10px] font-bold tracking-widest uppercase">Home</span>
       </Link>
 
       <Link
         href={groupId ? `/group/${groupId}/add` : '/new'}
-        className={`flex flex-col items-center justify-center w-full h-full text-text-muted transition-colors ${isAdd ? 'text-primary' : ''}`}
+        className={`nav-item ${isAdd ? 'active text-primary' : ''}`}
       >
-        <span className="text-2xl font-bold leading-none mb-1">+</span>
-        <span className="text-xs font-medium">Add</span>
+        <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-1 ${isAdd ? 'bg-primary/20 text-primary' : 'bg-white/10'}`}>
+          <Plus size={20} />
+        </div>
       </Link>
 
       <Link
         href={groupId ? `/group/${groupId}/history` : '/'}
-        className={`flex flex-col items-center justify-center w-full h-full text-text-muted transition-colors ${isHistory ? 'text-primary' : ''}`}
+        className={`nav-item ${isHistory ? 'active' : ''}`}
       >
-        <span className="text-xl mb-1">📋</span>
-        <span className="text-xs font-medium">History</span>
+        <History size={20} className="mb-1" />
+        <span className="text-[10px] font-bold tracking-widest uppercase">Log</span>
       </Link>
     </nav>
   )

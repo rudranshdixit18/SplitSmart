@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
-import { getGroup, getExpenses, getSettlements, saveSettlement, updateSettlement } from '../../../utils/api'
+import { getGroup, getExpenses, getSettlements, saveSettlement } from '../../../utils/api'
 import { calcBalances, simplifyDebts } from '../../../utils/debtEngine'
 import { fmtMoney, makeUpiLink, downloadCSV, downloadPDF } from '../../../utils/helpers'
 import MemberBalance from '../../../components/MemberBalance'
 import ExpenseRow from '../../../components/ExpenseRow'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Share2, Check, Download, FileText, Receipt, PartyPopper, Copy, User } from 'lucide-react'
+import { ArrowLeft, Share2, Check, Download, FileText, Receipt, Copy, User, Plus } from 'lucide-react'
 
 export default function GroupPage() {
   const router = useRouter()
@@ -51,7 +51,11 @@ export default function GroupPage() {
     return () => window.removeEventListener('focus', handleFocus)
   }, [id])
 
-  if (loading) return <div className="text-center text-text-muted mt-8">Loading group...</div>
+  if (loading) return (
+    <div className="flex h-screen items-center justify-center">
+      <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+    </div>
+  )
   if (!group) return null
 
   const members = group.members || []
@@ -119,238 +123,248 @@ export default function GroupPage() {
   const tabs = ['balances', 'expenses', 'settle']
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }} 
-      animate={{ opacity: 1 }} 
-      className="p-4 max-w-lg mx-auto pb-24"
-    >
-      <AnimatePresence>
-        {toast && (
-          <motion.div 
-            initial={{ opacity: 0, y: -20, x: '-50%' }}
-            animate={{ opacity: 1, y: 0, x: '-50%' }}
-            exit={{ opacity: 0, y: -20, x: '-50%' }}
-            className="fixed top-4 left-1/2 z-[100] bg-success text-white px-4 py-2 rounded-full font-medium shadow-lg flex items-center gap-2"
-          >
-            <Check size={16} /> {toast}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <div className="flex justify-between items-center mb-6 mt-3 bg-card p-4 rounded-xl border border-glass-border shadow-sm">
-        <div>
-          <Link href="/" className="text-text-muted text-sm hover:text-text flex items-center gap-1 mb-1">
-            <ArrowLeft size={14} /> Groups
-          </Link>
-          <h1 className="text-[22px] font-bold mt-1 text-text">{group.name}</h1>
-          <span className="text-[13px] text-text-muted">
-            {members.length} member{members.length !== 1 ? 's' : ''}
-          </span>
-        </div>
-        <button 
-          onClick={handleCopyInvite} 
-          className="btn btn-outline py-2 px-3 flex items-center gap-2"
-        >
-          <Share2 size={16} /> Share
-        </button>
-      </div>
-
-      <div className="flex bg-card p-1 rounded-xl border border-glass-border mb-6 relative">
-        {tabs.map(t => (
-          <button
-            key={t}
-            className={`flex-1 py-2 text-sm font-semibold rounded-lg capitalize relative z-10 transition-colors ${activeTab === t ? 'text-white' : 'text-text-muted hover:text-text'}`}
-            onClick={() => setActiveTab(t)}
-          >
-            {activeTab === t && (
-              <motion.div
-                layoutId="activeTab"
-                className="absolute inset-0 bg-primary rounded-lg -z-10"
-                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-              />
-            )}
-            {t}
-          </button>
-        ))}
-      </div>
-
-      {activeTab === 'balances' && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
-          {members.map(m => (
-            <MemberBalance
-              key={m.id}
-              member={m.name}
-              amount={balances[m.id] || 0}
-            />
-          ))}
-          {members.length === 1 && (
-            <p className="text-text-muted text-[13px] text-center mt-3">
-              Invite friends to start splitting!
-            </p>
-          )}
-        </motion.div>
-      )}
-
-      {activeTab === 'expenses' && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          {recentExpenses.length === 0 ? (
-            <div className="empty-state mt-4">
-              <div className="empty-icon">
-                <Receipt size={48} strokeWidth={1.5} />
-              </div>
-              <p className="text-text font-medium text-lg">No expenses yet</p>
-              <p className="text-text-muted text-sm mt-1">Add one to get started!</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {recentExpenses.map(exp => (
-                <ExpenseRow key={exp.id} expense={exp} members={members} />
-              ))}
-              {parsedExpenses.length > 5 && (
-                <Link 
-                  href={`/group/${id}/history`}
-                  className="block text-center text-primary text-sm mt-2 p-2 hover:underline"
-                >
-                  View all {parsedExpenses.length} expenses &rarr;
-                </Link>
-              )}
-            </div>
-          )}
-        </motion.div>
-      )}
-
-      {activeTab === 'settle' && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          {debts.length === 0 ? (
-            <div className="empty-state mt-4">
-              <div className="empty-icon">
-                <Check size={48} strokeWidth={1.5} />
-              </div>
-              <p className="text-text font-medium text-lg">Everyone's settled up!</p>
-              <p className="text-text-muted text-sm mt-1">No pending balances</p>
-            </div>
-          ) : (
-            <>
-              <p className="text-[13px] text-text-muted mb-3">
-                Simplified — minimum transactions needed:
-              </p>
-              <div className="space-y-3">
-                {debts.map((debt, i) => (
-                  <div className="bg-card border border-glass-border p-4 rounded-xl flex flex-col gap-3" key={i}>
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-text">{getName(debt.from)}</span>
-                        <span className="text-text-muted">&rarr;</span>
-                        <span className="font-semibold text-text">{getName(debt.to)}</span>
-                      </div>
-                      <span className="font-bold text-danger text-lg">{fmtMoney(debt.amount)}</span>
-                    </div>
-                    <div className="flex justify-end gap-2 mt-1">
-                      {getUpi(debt.to) && (
-                         <a
-                         href={makeUpiLink({
-                           upiId: getUpi(debt.to),
-                           name: getName(debt.to),
-                           amount: debt.amount,
-                           note: `SplitSmart - ${group.name}`
-                         })}
-                         className="btn bg-success text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm hover:brightness-110"
-                       >
-                         Pay via UPI
-                       </a>
-                      )}
-                      <button
-                        className="btn btn-outline text-success border-success px-3 py-1.5 rounded-lg hover:bg-success hover:text-white"
-                        onClick={() => handleMarkSettled(debt)}
-                      >
-                        Mark Settled
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-
-          {pendingSettlements.length > 0 && (
-            <div className="mt-5">
-              <h3 className="text-[15px] font-semibold mb-2 text-text">Pending</h3>
-              <div className="space-y-2">
-                {pendingSettlements.map(s => (
-                  <div key={s.id} className="bg-card border border-glass-border p-3 rounded-xl text-[13px] flex justify-between items-center">
-                    <div>
-                      <span className="font-medium text-text">{getName(s.from)}</span> <span className="text-text-muted mx-1">&rarr;</span> <span className="font-medium text-text">{getName(s.to)}</span>
-                      <span className="ml-2 text-text">{fmtMoney(s.amount)}</span>
-                    </div>
-                    <span className="bg-card-hover border border-border text-text-muted text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md">pending</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </motion.div>
-      )}
-
-      <div className="mt-6 pt-4 border-t border-glass-border">
-        <h3 className="text-[15px] font-semibold mb-3 text-text flex items-center gap-2">
-          <User size={16} /> Members
-        </h3>
-        <ul className="flex flex-col gap-2 m-0 p-0 list-none">
-          {members.map(m => (
-            <li key={m.id} className="flex items-center gap-3 bg-card border border-glass-border p-3 rounded-xl">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent text-white flex items-center justify-center font-bold text-lg shrink-0">
-                {m.name.charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <div className="font-semibold text-sm text-text">{m.name}</div>
-                {m.upiId && (
-                  <div className="text-[12px] text-text-muted">{m.upiId}</div>
-                )}
-              </div>
-            </li>
-          ))}
-        </ul>
-
-        <div className="mt-4 bg-card-hover p-4 rounded-xl flex items-center justify-between border border-glass-border">
-          <div>
-            <div className="text-xs text-text-muted mb-1">Invite Code</div>
-            <div className="font-mono text-lg font-bold text-primary-light tracking-widest">{group.code}</div>
-          </div>
-          <button className="btn btn-outline py-1.5 px-3" onClick={handleCopyInvite}>
-            <Copy size={16} />
-          </button>
-        </div>
-      </div>
-
-      {parsedExpenses.length > 0 && (
-        <div className="flex gap-2 mt-4 mb-20">
-          <button 
-            className="flex-1 btn btn-outline flex items-center justify-center gap-2"
-            onClick={handleExport}
-          >
-            <Download size={16} /> CSV
-          </button>
-          <button 
-            className="flex-1 btn btn-outline flex items-center justify-center gap-2"
-            onClick={handleExportPDF}
-          >
-            <FileText size={16} /> PDF
-          </button>
-        </div>
-      )}
-
+    <div className="relative min-h-screen">
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/20 rounded-full blur-[120px] animate-float pointer-events-none" />
+      
       <motion.div 
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        className="fixed bottom-6 right-6 z-40"
+        initial={{ opacity: 0, y: 10 }} 
+        animate={{ opacity: 1, y: 0 }} 
+        className="p-6 max-w-lg mx-auto pb-32 relative z-10"
       >
-        <Link 
-          href={`/group/${id}/add`} 
-          className="w-14 h-14 bg-gradient-to-r from-primary to-accent text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl"
+        <AnimatePresence>
+          {toast && (
+            <motion.div 
+              initial={{ opacity: 0, y: -20, x: '-50%' }}
+              animate={{ opacity: 1, y: 0, x: '-50%' }}
+              exit={{ opacity: 0, y: -20, x: '-50%' }}
+              className="fixed top-6 left-1/2 z-[100] bg-white/10 backdrop-blur-xl border border-white/20 text-white px-6 py-3 rounded-full font-medium shadow-[0_8px_32px_rgba(0,0,0,0.5)] flex items-center gap-3"
+            >
+              <div className="w-5 h-5 rounded-full bg-success flex items-center justify-center text-black">
+                <Check size={12} strokeWidth={3} /> 
+              </div>
+              {toast}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <header className="mb-8 mt-2 flex justify-between items-start">
+          <div>
+            <Link href="/" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/50 text-xs font-bold hover:bg-white/10 transition-colors mb-4 uppercase tracking-widest">
+              <ArrowLeft size={14} /> Workspaces
+            </Link>
+            <h1 className="text-4xl font-display font-bold tracking-tight text-white mb-2">{group.name}</h1>
+            <div className="flex items-center gap-2">
+              <div className="flex -space-x-2">
+                {members.slice(0, 3).map((m, i) => (
+                  <div key={m.id} className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-accent border-2 border-background flex items-center justify-center text-[10px] font-bold text-white z-[3] relative" style={{ zIndex: 10 - i }}>
+                    {m.name.charAt(0).toUpperCase()}
+                  </div>
+                ))}
+              </div>
+              <span className="text-sm font-medium text-white/40 ml-2">
+                {members.length} Member{members.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+          </div>
+          <button 
+            onClick={handleCopyInvite} 
+            className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors text-white/70"
+          >
+            <Share2 size={18} />
+          </button>
+        </header>
+
+        {/* Apple iOS Style Segmented Control */}
+        <div className="flex p-1.5 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 mb-8 relative z-20">
+          {tabs.map(t => (
+            <button
+              key={t}
+              className={`flex-1 py-2.5 text-[13px] font-bold rounded-xl capitalize relative z-10 transition-colors duration-300 ${activeTab === t ? 'text-white' : 'text-white/40 hover:text-white/70'}`}
+              onClick={() => setActiveTab(t)}
+            >
+              {activeTab === t && (
+                <motion.div
+                  layoutId="activeTabGroup"
+                  className="absolute inset-0 bg-white/10 border border-white/10 rounded-xl shadow-lg -z-10"
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                />
+              )}
+              {t}
+            </button>
+          ))}
+        </div>
+
+        <div className="relative min-h-[300px]">
+          {activeTab === 'balances' && (
+            <motion.div 
+              initial={{ opacity: 0, x: -20 }} 
+              animate={{ opacity: 1, x: 0 }} 
+              exit={{ opacity: 0, x: 20 }}
+              className="space-y-4"
+            >
+              {members.map(m => (
+                <MemberBalance
+                  key={m.id}
+                  member={m.name}
+                  amount={balances[m.id] || 0}
+                />
+              ))}
+              {members.length === 1 && (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto mb-4">
+                    <User size={24} className="text-primary" />
+                  </div>
+                  <p className="text-white/40 font-medium">Invite friends to start splitting</p>
+                  <button onClick={handleCopyInvite} className="mt-4 text-primary text-sm font-bold hover:underline">Copy Invite Link</button>
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          {activeTab === 'expenses' && (
+            <motion.div 
+              initial={{ opacity: 0, x: -20 }} 
+              animate={{ opacity: 1, x: 0 }} 
+            >
+              {recentExpenses.length === 0 ? (
+                <div className="empty-state">
+                  <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-4">
+                    <Receipt size={24} className="text-white/40" />
+                  </div>
+                  <p className="text-white font-display font-bold text-lg mb-1">No expenses yet</p>
+                  <p className="text-white/40 text-sm">Tap the + button to add one.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {recentExpenses.map(exp => (
+                    <ExpenseRow key={exp.id} expense={exp} members={members} />
+                  ))}
+                  {parsedExpenses.length > 5 && (
+                    <Link 
+                      href={`/group/${id}/history`}
+                      className="block w-full text-center py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-white font-bold text-sm transition-all"
+                    >
+                      View all {parsedExpenses.length} expenses
+                    </Link>
+                  )}
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          {activeTab === 'settle' && (
+            <motion.div 
+              initial={{ opacity: 0, x: -20 }} 
+              animate={{ opacity: 1, x: 0 }} 
+            >
+              {debts.length === 0 ? (
+                <div className="empty-state">
+                  <div className="w-16 h-16 rounded-full bg-success/10 border border-success/20 flex items-center justify-center mb-4 text-success shadow-[0_0_20px_rgba(0,204,102,0.2)]">
+                    <Check size={28} strokeWidth={3} />
+                  </div>
+                  <p className="text-white font-display font-bold text-xl mb-1">All settled up!</p>
+                  <p className="text-white/40 text-sm font-medium">No pending balances.</p>
+                </div>
+              ) : (
+                <>
+                  <p className="text-xs font-bold text-white/40 uppercase tracking-widest mb-4 ml-1">
+                    Suggested Transactions
+                  </p>
+                  <div className="space-y-3">
+                    {debts.map((debt, i) => (
+                      <div className="card p-5" key={i}>
+                        <div className="flex justify-between items-center mb-4">
+                          <div className="flex items-center gap-3">
+                            <span className="font-bold text-white">{getName(debt.from)}</span>
+                            <ArrowLeft size={14} className="text-white/20 rotate-180" />
+                            <span className="font-bold text-white">{getName(debt.to)}</span>
+                          </div>
+                          <span className="font-display font-bold text-primary text-xl">{fmtMoney(debt.amount)}</span>
+                        </div>
+                        <div className="flex gap-2">
+                          {getUpi(debt.to) && (
+                            <a
+                              href={makeUpiLink({
+                                upiId: getUpi(debt.to),
+                                name: getName(debt.to),
+                                amount: debt.amount,
+                                note: `SplitSmart - ${group.name}`
+                              })}
+                              className="flex-1 btn bg-success text-white py-2.5 rounded-xl font-bold hover:shadow-[0_0_15px_rgba(0,204,102,0.4)]"
+                            >
+                              Pay UPI
+                            </a>
+                          )}
+                          <button
+                            className="flex-1 btn btn-outline py-2.5 rounded-xl font-bold"
+                            onClick={() => handleMarkSettled(debt)}
+                          >
+                            Mark Settled
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </motion.div>
+          )}
+        </div>
+
+        <div className="mt-12 pt-8 border-t border-white/10">
+          <h3 className="text-xs font-bold text-white/40 uppercase tracking-widest mb-4 ml-1 flex items-center gap-2">
+            <User size={14} /> Group Members
+          </h3>
+          <div className="grid grid-cols-2 gap-3">
+            {members.map(m => (
+              <div key={m.id} className="card p-3 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent border border-white/20 flex items-center justify-center font-bold text-white shrink-0">
+                  {m.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="overflow-hidden">
+                  <div className="font-bold text-sm text-white truncate">{m.name}</div>
+                  {m.upiId && <div className="text-[10px] text-white/40 truncate font-mono mt-0.5">{m.upiId}</div>}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-4 bg-white/5 border border-white/10 p-5 rounded-2xl flex items-center justify-between">
+            <div>
+              <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Workspace Code</div>
+              <div className="font-mono text-xl font-bold text-primary-light">{group.code}</div>
+            </div>
+            <button className="w-12 h-12 rounded-xl bg-white/10 hover:bg-white/20 transition-colors flex items-center justify-center text-white" onClick={handleCopyInvite}>
+              <Copy size={18} />
+            </button>
+          </div>
+        </div>
+
+        {parsedExpenses.length > 0 && (
+          <div className="flex gap-3 mt-8 mb-12">
+            <button className="flex-1 btn btn-outline py-3 rounded-xl gap-2 font-bold" onClick={handleExport}>
+              <Download size={16} /> Export CSV
+            </button>
+            <button className="flex-1 btn btn-outline py-3 rounded-xl gap-2 font-bold" onClick={handleExportPDF}>
+              <FileText size={16} /> Export PDF
+            </button>
+          </div>
+        )}
+
+        {/* Floating Action Button */}
+        <motion.div 
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="fixed bottom-8 right-1/2 translate-x-1/2 sm:translate-x-0 sm:right-8 z-40"
         >
-          <Receipt size={24} />
-        </Link>
+          <Link 
+            href={`/group/${id}/add`} 
+            className="flex items-center gap-2 px-6 py-4 bg-primary text-white rounded-full font-bold shadow-[0_8px_32px_rgba(255,79,0,0.5)] border border-white/20"
+          >
+            <Plus size={20} strokeWidth={3} /> Add Expense
+          </Link>
+        </motion.div>
       </motion.div>
-    </motion.div>
+    </div>
   )
 }

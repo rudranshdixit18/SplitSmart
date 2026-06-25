@@ -174,186 +174,193 @@ export default function AddExpense() {
   }
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 10 }} 
-      animate={{ opacity: 1, y: 0 }} 
-      exit={{ opacity: 0 }}
-      className="p-4 max-w-lg mx-auto pb-12"
-    >
-      <Link href={`/group/${id}`} className="inline-flex items-center gap-1.5 text-text-muted hover:text-text mb-6 text-sm font-medium transition-colors">
-        <ArrowLeft size={16} /> Back
-      </Link>
-      <h1 className="text-2xl font-extrabold mb-6 text-text">Add Expense</h1>
+    <div className="relative min-h-screen">
+      <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/20 rounded-full blur-[120px] animate-float pointer-events-none" />
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <div>
-          <label className="block text-xs font-bold text-text-muted uppercase mb-1.5 ml-1 tracking-wider">Description</label>
-          <input
-            className="input"
-            type="text"
-            placeholder="Dinner, Uber, Groceries..."
-            value={desc}
-            onChange={e => setDesc(e.target.value)}
-          />
-        </div>
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }} 
+        animate={{ opacity: 1, y: 0 }} 
+        exit={{ opacity: 0 }}
+        className="p-6 max-w-lg mx-auto pb-12 relative z-10"
+      >
+        <Link href={`/group/${id}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/50 text-xs font-bold hover:bg-white/10 transition-colors mb-6 uppercase tracking-widest">
+          <ArrowLeft size={14} /> Back
+        </Link>
+        <h1 className="text-4xl font-display font-bold tracking-tight text-white mb-8">Add Expense</h1>
 
-        <div>
-          <label className="block text-xs font-bold text-text-muted uppercase mb-1.5 ml-1 tracking-wider">Amount (₹)</label>
-          <input
-            className="input text-xl font-bold"
-            type="number"
-            placeholder="0"
-            value={amount}
-            onChange={e => setAmount(e.target.value)}
-            min="0"
-            step="0.01"
-          />
-        </div>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          <div className="card p-6 space-y-5">
+            <div>
+              <label className="input-label">Description</label>
+              <input
+                className="input"
+                type="text"
+                placeholder="Dinner, Uber, Groceries..."
+                value={desc}
+                onChange={e => setDesc(e.target.value)}
+              />
+            </div>
 
-        <div className="flex gap-3">
-          <div className="flex-1">
-            <label className="block text-xs font-bold text-text-muted uppercase mb-1.5 ml-1 tracking-wider">Category</label>
-            <select 
-              className="input"
-              value={category} 
-              onChange={e => setCategory(e.target.value)}
+            <div>
+              <label className="input-label">Amount (₹)</label>
+              <input
+                className="input text-3xl font-display font-bold text-primary py-6"
+                type="number"
+                placeholder="0.00"
+                value={amount}
+                onChange={e => setAmount(e.target.value)}
+                min="0"
+                step="0.01"
+              />
+            </div>
+
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <label className="input-label">Category</label>
+                <select 
+                  className="input"
+                  value={category} 
+                  onChange={e => setCategory(e.target.value)}
+                >
+                  {CATEGORIES.map(c => (
+                    <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex-1">
+                <label className="input-label">Date</label>
+                <input
+                  className="input"
+                  type="date"
+                  value={date}
+                  onChange={e => setDate(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="input-label">Paid By</label>
+              <select 
+                className="input"
+                value={paidBy} 
+                onChange={e => setPaidBy(e.target.value)}
+              >
+                {members.map(m => (
+                  <option key={m.id} value={m.id}>{m.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="card p-6 space-y-5">
+            <div>
+              <label className="input-label">Split Type</label>
+              <div className="flex p-1.5 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 relative">
+                {SPLIT_TYPES.map(t => (
+                  <button
+                    key={t}
+                    type="button"
+                    className={`flex-1 py-2.5 text-[11px] font-bold rounded-xl capitalize relative z-10 transition-colors ${splitType === t ? 'text-white' : 'text-white/40 hover:text-white/70'}`}
+                    onClick={() => setSplitType(t)}
+                  >
+                    {splitType === t && (
+                      <motion.div
+                        layoutId="activeSplitTab"
+                        className="absolute inset-0 bg-white/10 border border-white/10 rounded-xl shadow-lg -z-10"
+                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                      />
+                    )}
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="input-label mb-3">Split Among</label>
+              <div className="flex flex-col gap-2">
+                {members.map(m => (
+                  <div 
+                    key={m.id} 
+                    className={`flex items-center gap-3 border p-3 rounded-2xl cursor-pointer transition-all ${splitAmong.includes(m.id) ? 'bg-primary/5 border-primary/30' : 'bg-white/5 border-white/5 hover:border-white/10'}`} 
+                    onClick={() => toggleMember(m.id)}
+                  >
+                    <div className="relative flex items-center justify-center w-6 h-6 shrink-0">
+                      <input
+                        type="checkbox"
+                        className="w-6 h-6 rounded-md border-2 border-primary/50 appearance-none checked:bg-primary checked:border-transparent transition-colors cursor-pointer"
+                        checked={splitAmong.includes(m.id)}
+                        onChange={() => {}}
+                        readOnly
+                      />
+                      {splitAmong.includes(m.id) && (
+                        <Check size={14} className="absolute text-white pointer-events-none" strokeWidth={3} />
+                      )}
+                    </div>
+                    <span className={`text-[15px] font-bold transition-colors ${splitAmong.includes(m.id) ? 'text-white' : 'text-white/50'}`}>{m.name}</span>
+
+                    {splitType !== 'equal' && splitAmong.includes(m.id) && (
+                      <input
+                        className="ml-auto w-[100px] bg-black/40 border border-white/10 text-white rounded-xl p-2 text-sm font-bold focus:outline-none focus:border-primary text-right"
+                        type="number"
+                        placeholder={splitType === 'percentage' ? '%' : splitType === 'shares' ? 'shares' : '₹'}
+                        value={splitValues[m.id] || ''}
+                        onChange={e => handleSplitValueChange(m.id, e.target.value)}
+                        onClick={e => e.stopPropagation()}
+                        min="0"
+                        step="0.01"
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div 
+              className={`flex items-center gap-3 border p-4 rounded-2xl cursor-pointer transition-all mt-4 ${isRecurring ? 'bg-primary/5 border-primary/30' : 'bg-white/5 border-white/5 hover:border-white/10'}`} 
+              onClick={() => setIsRecurring(!isRecurring)}
             >
-              {CATEGORIES.map(c => (
-                <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>
-              ))}
-            </select>
-          </div>
-          <div className="flex-1">
-            <label className="block text-xs font-bold text-text-muted uppercase mb-1.5 ml-1 tracking-wider">Date</label>
-            <input
-              className="input"
-              type="date"
-              value={date}
-              onChange={e => setDate(e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-xs font-bold text-text-muted uppercase mb-1.5 ml-1 tracking-wider">Paid By</label>
-          <select 
-            className="input"
-            value={paidBy} 
-            onChange={e => setPaidBy(e.target.value)}
-          >
-            {members.map(m => (
-              <option key={m.id} value={m.id}>{m.name}</option>
-            ))}
-          </select>
-        </div>
-
-
-        <div>
-          <label className="block text-xs font-bold text-text-muted uppercase mb-1.5 ml-1 tracking-wider">Split Type</label>
-          <div className="flex bg-card p-1 rounded-xl mb-3 border border-glass-border relative">
-            {SPLIT_TYPES.map(t => (
-              <button
-                key={t}
-                type="button"
-                className={`flex-1 py-2 text-xs font-semibold rounded-lg capitalize relative z-10 transition-colors ${splitType === t ? 'text-white' : 'text-text-muted hover:text-text'}`}
-                onClick={() => setSplitType(t)}
-              >
-                {splitType === t && (
-                  <motion.div
-                    layoutId="activeSplitTab"
-                    className="absolute inset-0 bg-primary rounded-lg -z-10"
-                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                  />
-                )}
-                {t}
-              </button>
-            ))}
-          </div>
-        </div>
-
-
-        <div>
-          <label className="block text-xs font-bold text-text-muted uppercase mb-1.5 ml-1 tracking-wider">Split Among</label>
-          <div className="flex flex-col gap-2 mb-3">
-            {members.map(m => (
-              <div 
-                key={m.id} 
-                className="flex items-center gap-3 bg-card border border-glass-border p-3 rounded-xl cursor-pointer hover:bg-card-hover transition-colors" 
-                onClick={() => toggleMember(m.id)}
-              >
-                <div className="relative flex items-center justify-center w-5 h-5">
-                  <input
-                    type="checkbox"
-                    className="w-5 h-5 rounded border-2 border-primary appearance-none checked:bg-primary checked:border-transparent transition-colors cursor-pointer"
-                    checked={splitAmong.includes(m.id)}
-                    onChange={() => {}} // handled by parent onClick
-                    readOnly
-                  />
-                  {splitAmong.includes(m.id) && (
-                    <Check size={14} className="absolute text-white pointer-events-none" strokeWidth={3} />
-                  )}
-                </div>
-                <span className="text-sm font-semibold text-text">{m.name}</span>
-
-
-                {splitType !== 'equal' && splitAmong.includes(m.id) && (
-                  <input
-                    className="ml-auto w-[90px] bg-background border border-glass-border text-text rounded-lg p-2 text-sm focus:outline-none focus:border-primary text-right"
-                    type="number"
-                    placeholder={splitType === 'percentage' ? '%' : splitType === 'shares' ? 'shares' : '₹'}
-                    value={splitValues[m.id] || ''}
-                    onChange={e => handleSplitValueChange(m.id, e.target.value)}
-                    onClick={e => e.stopPropagation()}
-                    min="0"
-                    step="0.01"
-                  />
+              <div className="relative flex items-center justify-center w-6 h-6 shrink-0">
+                <input 
+                  type="checkbox" 
+                  className="w-6 h-6 rounded-md border-2 border-primary/50 appearance-none checked:bg-primary checked:border-transparent transition-colors cursor-pointer"
+                  checked={isRecurring} 
+                  readOnly 
+                />
+                {isRecurring && (
+                  <Check size={14} className="absolute text-white pointer-events-none" strokeWidth={3} />
                 )}
               </div>
-            ))}
-          </div>
-        </div>
-
-
-        <div 
-          className="flex items-center gap-3 bg-card border border-glass-border p-3 rounded-xl cursor-pointer hover:bg-card-hover transition-colors" 
-          onClick={() => setIsRecurring(!isRecurring)}
-        >
-          <div className="relative flex items-center justify-center w-5 h-5">
-            <input 
-              type="checkbox" 
-              className="w-5 h-5 rounded border-2 border-primary appearance-none checked:bg-primary checked:border-transparent transition-colors cursor-pointer"
-              checked={isRecurring} 
-              readOnly 
-            />
+              <span className={`text-[15px] font-bold transition-colors ${isRecurring ? 'text-white' : 'text-white/50'}`}>Recurring expense</span>
+            </div>
+            
             {isRecurring && (
-              <Check size={14} className="absolute text-white pointer-events-none" strokeWidth={3} />
+              <select 
+                className="input mt-1"
+                value={recurFreq} 
+                onChange={e => setRecurFreq(e.target.value)}
+              >
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+              </select>
             )}
           </div>
-          <span className="text-sm font-semibold text-text">Recurring expense</span>
-        </div>
-        {isRecurring && (
-          <select 
-            className="input mt-1"
-            value={recurFreq} 
-            onChange={e => setRecurFreq(e.target.value)}
+
+          {error && (
+            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-danger text-sm font-bold bg-danger/10 border border-danger/20 p-3 rounded-xl flex items-center gap-2 justify-center">
+              {error}
+            </motion.p>
+          )}
+
+          <button 
+            type="submit" 
+            className={`w-full btn btn-primary py-4 mt-2 text-[15px] font-bold shadow-[0_0_40px_rgba(255,79,0,0.3)] hover:shadow-[0_0_60px_rgba(255,79,0,0.5)] ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+            disabled={loading}
           >
-            <option value="weekly">Weekly</option>
-            <option value="monthly">Monthly</option>
-          </select>
-        )}
-
-        {error && (
-          <p className="text-danger text-[13px] mt-2 bg-danger/10 p-2 rounded-lg text-center font-medium">{error}</p>
-        )}
-
-        <button 
-          type="submit" 
-          className={`w-full btn btn-primary py-3.5 mt-4 text-base ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
-          disabled={loading}
-        >
-          {loading ? 'Saving...' : <><Save size={18} /> Save Expense</>}
-        </button>
-      </form>
-    </motion.div>
+            {loading ? 'Saving...' : <><Save size={20} /> Record Expense</>}
+          </button>
+        </form>
+      </motion.div>
+    </div>
   )
 }

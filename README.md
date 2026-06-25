@@ -34,11 +34,22 @@ Splitting bills in a group is messy. Someone pays for dinner, another for gas, s
 
 ## How to Run
 
-```bash
-# clone it
-git clone <repo-url>
-cd splitsmart
+### Backend (Python/FastAPI)
 
+```bash
+# install python dependencies
+cd backend
+pip install -r requirements.txt
+
+# start fastapi backend
+uvicorn main:app --reload
+```
+**Backend API URL:** [http://localhost:8000](http://localhost:8000)
+
+### Frontend (Next.js)
+
+Open a new terminal:
+```bash
 # install frontend deps
 npm install
 
@@ -46,7 +57,7 @@ npm install
 npm run dev
 ```
 
-**Localhost URL:** [http://localhost:3000](http://localhost:3000)
+**Frontend App URL:** [http://localhost:3000](http://localhost:3000)
 
 ## Architecture
 
@@ -60,6 +71,9 @@ src/
 │   └── helpers.js     # Formatting, ID gen, CSV export
 └── styles/
     └── globals.css    # Global styles + CSS custom properties
+backend/
+├── main.py        # FastAPI server
+└── database.db    # SQLite DB
 ```
 
 ## Core Algorithm: Debt Simplification

@@ -20,24 +20,23 @@ const ExpenseRow = ({ expense, members }) => {
 
   return (
     <motion.div 
-      className="flex items-center p-3.5 bg-card border border-border rounded-xl mb-2.5 expense-item"
-      whileHover={{ scale: 1.02, rotateX: 2, rotateY: -2, zIndex: 10 }}
-      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-      style={{ perspective: 1000 }}
+      className="flex items-center p-4 bg-white/[0.02] hover:bg-white/[0.05] border border-white/5 hover:border-white/10 rounded-2xl mb-3 transition-colors cursor-pointer"
+      whileHover={{ scale: 1.01 }}
+      whileTap={{ scale: 0.98 }}
     >
-      <div className="w-11 h-11 rounded-lg flex items-center justify-center shrink-0 mr-3.5 icon">
+      <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 mr-4 bg-primary/10 text-primary shadow-[inset_0_0_20px_rgba(255,79,0,0.1)]">
         {getCategoryIcon(expense.category)}
       </div>
       <div className="flex-1 min-w-0">
-        <div className="font-semibold text-text text-[15px] mb-0.5 truncate">{expense.desc}</div>
-        <div className="text-[13px] text-text-muted flex items-center flex-wrap">
-          <span className="truncate max-w-[120px] inline-block align-bottom">{payerName}</span>&nbsp;paid • {fmtDate(expense.date)}
+        <div className="font-bold text-white text-[15px] mb-0.5 truncate tracking-tight">{expense.desc}</div>
+        <div className="text-xs font-medium text-white/40 flex items-center flex-wrap gap-1.5">
+          <span className="truncate max-w-[120px] text-white/60">{payerName}</span> paid • {fmtDate(expense.date)}
           {expense.splitType && expense.splitType !== 'equal' && (
-            <span className="bg-[#2d2d44] text-[#a29bfe] text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ml-1.5">{expense.splitType}</span>
+            <span className="bg-white/10 text-white/80 text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ml-1 border border-white/10">{expense.splitType}</span>
           )}
         </div>
       </div>
-      <div className="font-bold text-text text-[17px] ml-2 shrink-0">{fmtMoney(expense.amount)}</div>
+      <div className="font-display font-bold text-white text-lg ml-3 shrink-0">{fmtMoney(expense.amount)}</div>
     </motion.div>
   )
 }
