@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import { getGroup, saveExpense } from '../../../utils/api'
+import { motion } from 'framer-motion'
+import { ArrowLeft, Save, Check } from 'lucide-react'
 
 const CATEGORIES = ['food', 'travel', 'rent', 'utilities', 'entertainment', 'shopping', 'other']
 const SPLIT_TYPES = ['equal', 'percentage', 'exact', 'shares']
@@ -25,7 +27,6 @@ export default function AddExpense() {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    // only run once we have the ID (next router query can be empty on first render)
     if (!id) return
 
     setDate(new Date().toISOString().split('T')[0])
@@ -37,10 +38,8 @@ export default function AddExpense() {
       }
       setGroup(g)
       setPaidBy(g.members[0]?.id || '')
-      // default: everyone is in the split
       const allIds = g.members.map(m => m.id)
       setSplitAmong(allIds)
-      // init split values
       const vals = {}
       g.members.forEach(m => { vals[m.id] = '' })
       setSplitValues(vals)
@@ -73,7 +72,6 @@ export default function AddExpense() {
 
     if (splitType === 'equal') {
       const share = Math.round((amt / involved.length) * 100) / 100
-      // handle rounding - give the remainder to first person
       let total = 0
       involved.forEach((memberId, i) => {
         if (i === involved.length - 1) {
@@ -154,7 +152,6 @@ export default function AddExpense() {
 
     setLoading(true)
 
-    // FastAPI expects splitDetails map (mapping string to number/float)
     const splitDetails = splits;
 
     const expense = {
@@ -166,7 +163,7 @@ export default function AddExpense() {
       paidBy,
       splitType,
       splitAmong,
-      splitDetails, // Map to model field names
+      splitDetails,
       date: new Date(date).toISOString(),
       isRecurring,
       recurFreq: isRecurring ? recurFreq : null
@@ -177,15 +174,22 @@ export default function AddExpense() {
   }
 
   return (
-    <div className="p-4 max-w-lg mx-auto">
-      <Link href={`/group/${id}`} className="inline-block text-text-muted hover:text-text mb-4 text-sm font-medium">← Back</Link>
-      <h1 className="text-2xl font-bold mb-6 text-text">Add Expense</h1>
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }} 
+      animate={{ opacity: 1, y: 0 }} 
+      exit={{ opacity: 0 }}
+      className="p-4 max-w-lg mx-auto pb-12"
+    >
+      <Link href={`/group/${id}`} className="inline-flex items-center gap-1.5 text-text-muted hover:text-text mb-6 text-sm font-medium transition-colors">
+        <ArrowLeft size={16} /> Back
+      </Link>
+      <h1 className="text-2xl font-extrabold mb-6 text-text">Add Expense</h1>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div>
           <label className="block text-xs font-bold text-text-muted uppercase mb-1.5 ml-1 tracking-wider">Description</label>
           <input
-            className="w-full bg-card border border-border text-text rounded-xl p-3 focus:outline-none focus:border-primary"
+            className="input"
             type="text"
             placeholder="Dinner, Uber, Groceries..."
             value={desc}
@@ -196,7 +200,7 @@ export default function AddExpense() {
         <div>
           <label className="block text-xs font-bold text-text-muted uppercase mb-1.5 ml-1 tracking-wider">Amount (₹)</label>
           <input
-            className="w-full bg-card border border-border text-text rounded-xl p-3 focus:outline-none focus:border-primary text-xl font-bold"
+            className="input text-xl font-bold"
             type="number"
             placeholder="0"
             value={amount}
@@ -210,7 +214,7 @@ export default function AddExpense() {
           <div className="flex-1">
             <label className="block text-xs font-bold text-text-muted uppercase mb-1.5 ml-1 tracking-wider">Category</label>
             <select 
-              className="w-full bg-card border border-border text-text rounded-xl p-3 focus:outline-none focus:border-primary"
+              className="input"
               value={category} 
               onChange={e => setCategory(e.target.value)}
             >
@@ -222,7 +226,7 @@ export default function AddExpense() {
           <div className="flex-1">
             <label className="block text-xs font-bold text-text-muted uppercase mb-1.5 ml-1 tracking-wider">Date</label>
             <input
-              className="w-full bg-card border border-border text-text rounded-xl p-3 focus:outline-none focus:border-primary"
+              className="input"
               type="date"
               value={date}
               onChange={e => setDate(e.target.value)}
@@ -233,7 +237,7 @@ export default function AddExpense() {
         <div>
           <label className="block text-xs font-bold text-text-muted uppercase mb-1.5 ml-1 tracking-wider">Paid By</label>
           <select 
-            className="w-full bg-card border border-border text-text rounded-xl p-3 focus:outline-none focus:border-primary"
+            className="input"
             value={paidBy} 
             onChange={e => setPaidBy(e.target.value)}
           >
@@ -246,14 +250,21 @@ export default function AddExpense() {
         {/* split type selector */}
         <div>
           <label className="block text-xs font-bold text-text-muted uppercase mb-1.5 ml-1 tracking-wider">Split Type</label>
-          <div className="flex bg-[#2d2d44] p-1 rounded-xl mb-3">
+          <div className="flex bg-card p-1 rounded-xl mb-3 border border-glass-border relative">
             {SPLIT_TYPES.map(t => (
               <button
                 key={t}
                 type="button"
-                className={`flex-1 py-2 text-xs font-semibold rounded-lg capitalize transition-colors ${splitType === t ? 'bg-[#6c5ce7] text-white shadow' : 'text-text-muted hover:text-text'}`}
+                className={`flex-1 py-2 text-xs font-semibold rounded-lg capitalize relative z-10 transition-colors ${splitType === t ? 'text-white' : 'text-text-muted hover:text-text'}`}
                 onClick={() => setSplitType(t)}
               >
+                {splitType === t && (
+                  <motion.div
+                    layoutId="activeSplitTab"
+                    className="absolute inset-0 bg-primary rounded-lg -z-10"
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                  />
+                )}
                 {t}
               </button>
             ))}
@@ -267,19 +278,19 @@ export default function AddExpense() {
             {members.map(m => (
               <div 
                 key={m.id} 
-                className="flex items-center gap-3 bg-card border border-border p-3 rounded-xl cursor-pointer hover:bg-card-hover transition-colors" 
+                className="flex items-center gap-3 bg-card border border-glass-border p-3 rounded-xl cursor-pointer hover:bg-card-hover transition-colors" 
                 onClick={() => toggleMember(m.id)}
               >
                 <div className="relative flex items-center justify-center w-5 h-5">
                   <input
                     type="checkbox"
-                    className="w-5 h-5 rounded border-2 border-[#6c5ce7] appearance-none checked:bg-[#6c5ce7] checked:border-transparent transition-colors cursor-pointer"
+                    className="w-5 h-5 rounded border-2 border-primary appearance-none checked:bg-primary checked:border-transparent transition-colors cursor-pointer"
                     checked={splitAmong.includes(m.id)}
                     onChange={() => {}} // handled by parent onClick
                     readOnly
                   />
                   {splitAmong.includes(m.id) && (
-                    <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
+                    <Check size={14} className="absolute text-white pointer-events-none" strokeWidth={3} />
                   )}
                 </div>
                 <span className="text-sm font-semibold text-text">{m.name}</span>
@@ -287,7 +298,7 @@ export default function AddExpense() {
                 {/* show input for non-equal splits */}
                 {splitType !== 'equal' && splitAmong.includes(m.id) && (
                   <input
-                    className="ml-auto w-[90px] bg-background border border-border text-text rounded-lg p-2 text-sm focus:outline-none focus:border-primary text-right"
+                    className="ml-auto w-[90px] bg-background border border-glass-border text-text rounded-lg p-2 text-sm focus:outline-none focus:border-primary text-right"
                     type="number"
                     placeholder={splitType === 'percentage' ? '%' : splitType === 'shares' ? 'shares' : '₹'}
                     value={splitValues[m.id] || ''}
@@ -304,25 +315,25 @@ export default function AddExpense() {
 
         {/* recurring */}
         <div 
-          className="flex items-center gap-3 bg-card border border-border p-3 rounded-xl cursor-pointer hover:bg-card-hover transition-colors" 
+          className="flex items-center gap-3 bg-card border border-glass-border p-3 rounded-xl cursor-pointer hover:bg-card-hover transition-colors" 
           onClick={() => setIsRecurring(!isRecurring)}
         >
           <div className="relative flex items-center justify-center w-5 h-5">
             <input 
               type="checkbox" 
-              className="w-5 h-5 rounded border-2 border-[#6c5ce7] appearance-none checked:bg-[#6c5ce7] checked:border-transparent transition-colors cursor-pointer"
+              className="w-5 h-5 rounded border-2 border-primary appearance-none checked:bg-primary checked:border-transparent transition-colors cursor-pointer"
               checked={isRecurring} 
               readOnly 
             />
             {isRecurring && (
-              <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
+              <Check size={14} className="absolute text-white pointer-events-none" strokeWidth={3} />
             )}
           </div>
           <span className="text-sm font-semibold text-text">Recurring expense</span>
         </div>
         {isRecurring && (
           <select 
-            className="w-full bg-card border border-border text-text rounded-xl p-3 focus:outline-none focus:border-primary mt-1"
+            className="input mt-1"
             value={recurFreq} 
             onChange={e => setRecurFreq(e.target.value)}
           >
@@ -332,17 +343,17 @@ export default function AddExpense() {
         )}
 
         {error && (
-          <p className="text-[#e17055] text-[13px] mt-2 bg-[#e17055]/10 p-2 rounded-lg text-center font-medium">{error}</p>
+          <p className="text-danger text-[13px] mt-2 bg-danger/10 p-2 rounded-lg text-center font-medium">{error}</p>
         )}
 
         <button 
           type="submit" 
-          className={`w-full bg-primary text-white text-center py-3.5 rounded-xl font-bold hover:bg-primary-light transition-colors mt-4 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+          className={`w-full btn btn-primary py-3.5 mt-4 text-base ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
           disabled={loading}
         >
-          {loading ? 'Saving...' : 'Save Expense 💾'}
+          {loading ? 'Saving...' : <><Save size={18} /> Save Expense</>}
         </button>
       </form>
-    </div>
+    </motion.div>
   )
 }

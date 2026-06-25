@@ -1,4 +1,18 @@
-import { categoryEmoji, fmtMoney, fmtDate } from '../utils/helpers'
+import { fmtMoney, fmtDate } from '../utils/helpers'
+import { motion } from 'framer-motion'
+import { Utensils, Plane, Home, Lightbulb, Film, ShoppingCart, FileText } from 'lucide-react'
+
+const getCategoryIcon = (cat) => {
+  switch (cat) {
+    case 'food': return <Utensils size={20} />
+    case 'travel': return <Plane size={20} />
+    case 'rent': return <Home size={20} />
+    case 'utilities': return <Lightbulb size={20} />
+    case 'entertainment': return <Film size={20} />
+    case 'shopping': return <ShoppingCart size={20} />
+    default: return <FileText size={20} />
+  }
+}
 
 // single expense row in a list
 const ExpenseRow = ({ expense, members }) => {
@@ -7,9 +21,14 @@ const ExpenseRow = ({ expense, members }) => {
   const payerName = payer ? payer.name : 'Someone'
 
   return (
-    <div className="flex items-center p-3.5 bg-card border border-border rounded-xl mb-2.5">
-      <div className="w-11 h-11 bg-[#2d2d44] rounded-lg flex items-center justify-center text-2xl shrink-0 mr-3.5">
-        {categoryEmoji(expense.category)}
+    <motion.div 
+      className="flex items-center p-3.5 bg-card border border-border rounded-xl mb-2.5 expense-item"
+      whileHover={{ scale: 1.02, rotateX: 2, rotateY: -2, zIndex: 10 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+      style={{ perspective: 1000 }}
+    >
+      <div className="w-11 h-11 rounded-lg flex items-center justify-center shrink-0 mr-3.5 emoji">
+        {getCategoryIcon(expense.category)}
       </div>
       <div className="flex-1 min-w-0">
         <div className="font-semibold text-text text-[15px] mb-0.5 truncate">{expense.desc}</div>
@@ -21,7 +40,7 @@ const ExpenseRow = ({ expense, members }) => {
         </div>
       </div>
       <div className="font-bold text-text text-[17px] ml-2 shrink-0">{fmtMoney(expense.amount)}</div>
-    </div>
+    </motion.div>
   )
 }
 

@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { getGroup, getExpenses } from '../../../utils/api'
 import { fmtMoney, downloadCSV, downloadPDF } from '../../../utils/helpers'
 import ExpenseRow from '../../../components/ExpenseRow'
+import { motion } from 'framer-motion'
+import { ArrowLeft, Search, Download, FileText, SearchX } from 'lucide-react'
 
 const FILTER_PERIODS = [
   { label: 'All', value: 'all' },
@@ -38,33 +40,27 @@ export default function History() {
 
   const members = group?.members || []
 
-  // ensure split_details is parsed if it comes from backend as a string
   const parsedExpenses = useMemo(() => expenses.map(e => ({
     ...e,
     splitDetails: typeof e.split_details === 'string' ? JSON.parse(e.split_details || '{}') : (e.split_details || {})
   })), [expenses])
 
-  // filter logic
   const filtered = useMemo(() => {
     let result = [...parsedExpenses]
 
-    // search
     if (search.trim()) {
       const q = search.toLowerCase()
       result = result.filter(e => e.desc.toLowerCase().includes(q))
     }
 
-    // category
     if (catFilter !== 'all') {
       result = result.filter(e => e.category === catFilter)
     }
 
-    // paid by
     if (paidByFilter !== 'all') {
       result = result.filter(e => e.paidBy === paidByFilter)
     }
 
-    // period filter
     if (periodFilter !== 'all') {
       const now = new Date()
       let cutoff
@@ -79,36 +75,39 @@ export default function History() {
       }
     }
 
-    // sort newest first
     result.sort((a, b) => new Date(b.date) - new Date(a.date))
     return result
   }, [parsedExpenses, search, catFilter, paidByFilter, periodFilter])
 
-  // stats
   const totalSpent = filtered.reduce((sum, e) => sum + e.amount, 0)
-  // TODO: calculate "your share" - need to know who the current user is
-  // for now just show total / member count as rough estimate
   const avgPerPerson = members.length > 0 ? totalSpent / members.length : 0
 
-  if (loading) return <div className="p-4 max-w-lg mx-auto"><p className="text-text-muted text-center mt-8">Loading history...</p></div>
-  if (!group) return <div className="p-4 max-w-lg mx-auto"><p className="text-text-muted">Group not found.</p></div>
+  if (loading) return <div className="p-4 max-w-lg mx-auto"><p className="text-text-muted text-center mt-8 animate-pulse">Loading history...</p></div>
+  if (!group) return <div className="p-4 max-w-lg mx-auto"><p className="text-text-muted">Workspace not found.</p></div>
 
   return (
-    <div className="p-4 max-w-lg mx-auto">
-      <Link href={`/group/${id}`} className="inline-block text-text-muted hover:text-text mb-4 text-sm font-medium">← Back to {group.name}</Link>
-      <h1 className="text-2xl font-bold mb-6 text-text">Expense History</h1>
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }} 
+      animate={{ opacity: 1, y: 0 }} 
+      exit={{ opacity: 0 }}
+      className="p-4 max-w-lg mx-auto pb-12"
+    >
+      <Link href={`/group/${id}`} className="inline-flex items-center gap-1.5 text-text-muted hover:text-text mb-6 text-sm font-medium transition-colors">
+        <ArrowLeft size={16} /> Back to {group.name}
+      </Link>
+      <h1 className="text-2xl font-extrabold mb-6 text-text">Expense History</h1>
 
       {/* stats */}
       <div className="flex gap-2 mb-6">
-        <div className="flex-1 bg-card border border-border p-3 rounded-xl text-center">
+        <div className="flex-1 bg-card border border-glass-border p-3 rounded-xl text-center shadow-sm">
           <div className="font-bold text-lg text-text mb-0.5">{fmtMoney(totalSpent)}</div>
           <div className="text-[11px] text-text-muted uppercase tracking-wider font-semibold">Total Spent</div>
         </div>
-        <div className="flex-1 bg-card border border-border p-3 rounded-xl text-center">
+        <div className="flex-1 bg-card border border-glass-border p-3 rounded-xl text-center shadow-sm">
           <div className="font-bold text-lg text-text mb-0.5">{fmtMoney(avgPerPerson)}</div>
           <div className="text-[11px] text-text-muted uppercase tracking-wider font-semibold">Avg / Person</div>
         </div>
-        <div className="flex-1 bg-card border border-border p-3 rounded-xl text-center">
+        <div className="flex-1 bg-card border border-glass-border p-3 rounded-xl text-center shadow-sm">
           <div className="font-bold text-lg text-text mb-0.5">{filtered.length}</div>
           <div className="text-[11px] text-text-muted uppercase tracking-wider font-semibold">Expenses</div>
         </div>
@@ -116,9 +115,11 @@ export default function History() {
 
       {/* search */}
       <div className="relative mb-3">
-        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-lg">🔍</span>
+        <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted">
+          <Search size={18} />
+        </div>
         <input
-          className="w-full bg-card border border-border text-text rounded-xl py-3 pr-3 pl-11 focus:outline-none focus:border-primary placeholder:text-text-muted"
+          className="input pl-11"
           type="text"
           placeholder="Search expenses..."
           value={search}
@@ -129,7 +130,7 @@ export default function History() {
       {/* filters */}
       <div className="flex gap-2 mb-4">
         <select 
-          className="flex-1 bg-card border border-border text-text rounded-xl p-3 text-sm focus:outline-none focus:border-primary"
+          className="input !py-2.5 !text-sm"
           value={catFilter} 
           onChange={e => setCatFilter(e.target.value)}
         >
@@ -144,7 +145,7 @@ export default function History() {
         </select>
 
         <select 
-          className="flex-1 bg-card border border-border text-text rounded-xl p-3 text-sm focus:outline-none focus:border-primary"
+          className="input !py-2.5 !text-sm"
           value={paidByFilter} 
           onChange={e => setPaidByFilter(e.target.value)}
         >
@@ -156,13 +157,20 @@ export default function History() {
       </div>
 
       {/* period tabs */}
-      <div className="flex bg-[#2d2d44] p-1 rounded-xl mb-6">
+      <div className="flex bg-card p-1 rounded-xl mb-6 border border-glass-border relative">
         {FILTER_PERIODS.map(p => (
           <button
             key={p.value}
-            className={`flex-1 py-2 text-xs font-semibold rounded-lg capitalize transition-colors ${periodFilter === p.value ? 'bg-[#6c5ce7] text-white shadow' : 'text-text-muted hover:text-text'}`}
+            className={`flex-1 py-2 text-xs font-semibold rounded-lg capitalize relative z-10 transition-colors ${periodFilter === p.value ? 'text-white' : 'text-text-muted hover:text-text'}`}
             onClick={() => setPeriodFilter(p.value)}
           >
+            {periodFilter === p.value && (
+              <motion.div
+                layoutId="activePeriodTab"
+                className="absolute inset-0 bg-primary rounded-lg -z-10"
+                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+              />
+            )}
             {p.label}
           </button>
         ))}
@@ -170,36 +178,41 @@ export default function History() {
 
       {/* expense list */}
       {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 px-4 text-center bg-card rounded-2xl border border-border">
-          <span className="text-5xl mb-4">🔎</span>
-          <p className="text-text font-medium">No expenses found</p>
+        <div className="empty-state mt-4">
+          <div className="empty-emoji">
+            <SearchX size={48} strokeWidth={1.5} />
+          </div>
+          <p className="text-text font-medium text-lg">No expenses found</p>
           {search && <p className="text-text-muted text-sm mt-1">Try a different search term</p>}
         </div>
       ) : (
-        <div className="space-y-2">
+        <motion.div 
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+          className="space-y-2"
+        >
           {filtered.map(exp => (
             <ExpenseRow key={exp.id} expense={exp} members={members} />
           ))}
-        </div>
+        </motion.div>
       )}
 
       {/* export */}
       {parsedExpenses.length > 0 && (
-        <div className="flex gap-2 mt-4">
+        <div className="flex gap-2 mt-6">
           <button
-            className="flex-1 bg-transparent border border-border text-text py-2.5 rounded-xl text-sm font-semibold hover:bg-card-hover transition-colors"
+            className="flex-1 btn btn-outline flex items-center justify-center gap-2"
             onClick={() => downloadCSV(parsedExpenses, members)}
           >
-            📥 CSV
+            <Download size={16} /> CSV
           </button>
           <button
-            className="flex-1 bg-transparent border border-border text-text py-2.5 rounded-xl text-sm font-semibold hover:bg-card-hover transition-colors"
+            className="flex-1 btn btn-outline flex items-center justify-center gap-2"
             onClick={() => downloadPDF(parsedExpenses, members, group.name)}
           >
-            📄 PDF
+            <FileText size={16} /> PDF
           </button>
         </div>
       )}
-    </div>
+    </motion.div>
   )
 }

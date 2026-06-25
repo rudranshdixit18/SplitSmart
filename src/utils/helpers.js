@@ -87,7 +87,7 @@ export function downloadPDF(expenses, members, groupName) {
       th { background: #f5f5f5; font-weight: 600; }
       .total { font-weight: 700; font-size: 14px; margin-top: 12px; }
     </style></head><body>
-      <h2>💸 SplitSmart - ${groupName || 'Group'}</h2>
+      <h2>SplitSmart - ${groupName || 'Group'}</h2>
       <div class="sub">Exported on ${new Date().toLocaleDateString('en-IN')}</div>
       <table>
         <thead><tr><th>Date</th><th>Description</th><th>Amount</th><th>Paid By</th><th>Category</th></tr></thead>
@@ -105,17 +105,4 @@ export function downloadPDF(expenses, members, groupName) {
     w.focus()
     setTimeout(() => w.print(), 300)
   }
-}
-
-const emojiMap = {
-  food: '🍕',
-  travel: '✈️',
-  rent: '🏠',
-  utilities: '💡',
-  entertainment: '🎬',
-  shopping: '🛒',
-}
-
-export function categoryEmoji(cat) {
-  return emojiMap[cat] || '📝'
 }

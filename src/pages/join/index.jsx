@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import { getGroup, addMemberToGroup } from '../../utils/api'
+import { motion } from 'framer-motion'
+import { ArrowLeft, LogIn } from 'lucide-react'
 
 export default function JoinGroup() {
   const router = useRouter()
@@ -24,7 +26,6 @@ export default function JoinGroup() {
     setError('')
 
     try {
-      // Find group by code. In our backend, get_group checks id first, then code.
       const group = await getGroup(code.trim().toUpperCase())
       
       if (!group) {
@@ -33,7 +34,6 @@ export default function JoinGroup() {
         return
       }
 
-      // hackathon random id
       const memberId = `m_${Date.now()}`
       
       await addMemberToGroup(group.id, {
@@ -49,15 +49,22 @@ export default function JoinGroup() {
   }
 
   return (
-    <div className="p-4 max-w-lg mx-auto">
-      <Link href="/" className="inline-block text-text-muted hover:text-text mb-4 text-sm font-medium">← Back to Home</Link>
-      <h1 className="text-2xl font-bold mb-6 text-text">Join Group</h1>
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }} 
+      animate={{ opacity: 1, y: 0 }} 
+      exit={{ opacity: 0 }}
+      className="p-4 max-w-lg mx-auto"
+    >
+      <Link href="/" className="inline-flex items-center gap-1.5 text-text-muted hover:text-text mb-6 text-sm font-medium transition-colors">
+        <ArrowLeft size={16} /> Back to Dashboard
+      </Link>
+      <h1 className="text-2xl font-extrabold mb-6 text-text">Join Workspace</h1>
 
-      <div className="space-y-4">
+      <div className="space-y-5">
         <div>
-          <label className="block text-sm font-bold text-text-muted mb-1.5 uppercase tracking-wider">Invite Code</label>
+          <label className="block text-xs font-bold text-text-muted mb-2 uppercase tracking-widest">Invite Code</label>
           <input
-            className="w-full bg-card border border-border text-text rounded-xl p-3 font-mono uppercase focus:outline-none focus:border-primary placeholder:text-text-muted placeholder:font-sans"
+            className="input font-mono uppercase placeholder:font-sans"
             type="text"
             placeholder="e.g. X7B9A2"
             value={code}
@@ -66,9 +73,9 @@ export default function JoinGroup() {
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-text-muted mb-1.5 uppercase tracking-wider">Your Name</label>
+          <label className="block text-xs font-bold text-text-muted mb-2 uppercase tracking-widest">Your Name</label>
           <input
-            className="w-full bg-card border border-border text-text rounded-xl p-3 focus:outline-none focus:border-primary placeholder:text-text-muted"
+            className="input"
             type="text"
             placeholder="What should people call you?"
             value={name}
@@ -82,12 +89,12 @@ export default function JoinGroup() {
       </div>
 
       <button
-        className={`w-full bg-primary text-white py-3.5 rounded-xl font-bold mt-8 shadow-lg hover:bg-primary-light hover:-translate-y-0.5 transition-all ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+        className={`w-full btn btn-primary py-3.5 mt-8 text-base ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
         onClick={handleJoin}
         disabled={loading}
       >
-        {loading ? 'Joining...' : 'Join Group 🤝'}
+        {loading ? 'Processing...' : <><LogIn size={18} /> Join Workspace</>}
       </button>
-    </div>
+    </motion.div>
   )
 }
