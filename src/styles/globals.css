@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* SplitSmart - main styles */
 /* dark theme, mobile first */
 
