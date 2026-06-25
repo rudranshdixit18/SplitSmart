@@ -65,7 +65,7 @@ function Home() {
           animate={{ opacity: 1, scale: 1 }}
           className="empty-state mt-4"
         >
-          <div className="empty-emoji">
+          <div className="empty-icon">
             <Users size={48} strokeWidth={1.5} />
           </div>
           <p className="text-text font-medium text-lg">No groups yet</p>

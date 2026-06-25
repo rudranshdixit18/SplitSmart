@@ -248,7 +248,7 @@ textarea {
   border-color: rgba(255, 255, 255, 0.12);
 }
 
-.expense-item .emoji {
+.expense-item .icon {
   width: 40px;
   height: 40px;
   display: flex;
@@ -389,7 +389,7 @@ textarea {
   border: 1px dashed var(--glass-border);
 }
 
-.empty-state .empty-emoji {
+.empty-state .empty-icon {
   display: flex;
   justify-content: center;
   margin-bottom: 16px;

@@ -28,7 +28,6 @@ export default function GroupPage() {
     }
     setGroup(g)
     
-    // fetch expenses and settlements in parallel
     const [exp, setts] = await Promise.all([
       getExpenses(id),
       getSettlements(id)
@@ -39,12 +38,10 @@ export default function GroupPage() {
     setLoading(false)
   }
 
-  // load data
   useEffect(() => {
     loadData()
   }, [id])
 
-  // refresh data when we come back from adding expense
   useEffect(() => {
     if (!id) return
     const handleFocus = () => {
@@ -59,7 +56,6 @@ export default function GroupPage() {
 
   const members = group.members || []
   
-  // ensure split_details is parsed if it comes from backend as a string
   const parsedExpenses = expenses.map(e => ({
     ...e,
     splitDetails: typeof e.split_details === 'string' ? JSON.parse(e.split_details || '{}') : (e.split_details || {})
@@ -68,7 +64,6 @@ export default function GroupPage() {
   const balances = calcBalances(parsedExpenses, settlements, members)
   const debts = simplifyDebts(balances)
 
-  // pending settlements
   const pendingSettlements = settlements.filter(s => s.status === 'pending')
 
   function showToast(msg) {
@@ -109,13 +104,11 @@ export default function GroupPage() {
     downloadPDF(parsedExpenses, members, group.name)
   }
 
-  // get member name from id
   const getName = (memberId) => {
     const m = members.find(x => x.id === memberId)
     return m ? m.name : 'Unknown'
   }
 
-  // get member upi from id
   const getUpi = (memberId) => {
     const m = members.find(x => x.id === memberId)
     return m ? m.upiId : ''
@@ -144,7 +137,6 @@ export default function GroupPage() {
         )}
       </AnimatePresence>
 
-      {/* header */}
       <div className="flex justify-between items-center mb-6 mt-3 bg-card p-4 rounded-xl border border-glass-border shadow-sm">
         <div>
           <Link href="/" className="text-text-muted text-sm hover:text-text flex items-center gap-1 mb-1">
@@ -163,7 +155,6 @@ export default function GroupPage() {
         </button>
       </div>
 
-      {/* tabs */}
       <div className="flex bg-card p-1 rounded-xl border border-glass-border mb-6 relative">
         {tabs.map(t => (
           <button
@@ -183,7 +174,6 @@ export default function GroupPage() {
         ))}
       </div>
 
-      {/* BALANCES TAB */}
       {activeTab === 'balances' && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
           {members.map(m => (
@@ -201,12 +191,11 @@ export default function GroupPage() {
         </motion.div>
       )}
 
-      {/* EXPENSES TAB */}
       {activeTab === 'expenses' && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           {recentExpenses.length === 0 ? (
             <div className="empty-state mt-4">
-              <div className="empty-emoji">
+              <div className="empty-icon">
                 <Receipt size={48} strokeWidth={1.5} />
               </div>
               <p className="text-text font-medium text-lg">No expenses yet</p>
@@ -230,12 +219,11 @@ export default function GroupPage() {
         </motion.div>
       )}
 
-      {/* SETTLE TAB */}
       {activeTab === 'settle' && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           {debts.length === 0 ? (
             <div className="empty-state mt-4">
-              <div className="empty-emoji">
+              <div className="empty-icon">
                 <Check size={48} strokeWidth={1.5} />
               </div>
               <p className="text-text font-medium text-lg">Everyone's settled up!</p>
@@ -284,7 +272,6 @@ export default function GroupPage() {
             </>
           )}
 
-          {/* pending settlements history */}
           {pendingSettlements.length > 0 && (
             <div className="mt-5">
               <h3 className="text-[15px] font-semibold mb-2 text-text">Pending</h3>
@@ -304,7 +291,6 @@ export default function GroupPage() {
         </motion.div>
       )}
 
-      {/* Members section */}
       <div className="mt-6 pt-4 border-t border-glass-border">
         <h3 className="text-[15px] font-semibold mb-3 text-text flex items-center gap-2">
           <User size={16} /> Members
@@ -325,7 +311,6 @@ export default function GroupPage() {
           ))}
         </ul>
 
-        {/* invite box */}
         <div className="mt-4 bg-card-hover p-4 rounded-xl flex items-center justify-between border border-glass-border">
           <div>
             <div className="text-xs text-text-muted mb-1">Invite Code</div>
@@ -337,7 +322,6 @@ export default function GroupPage() {
         </div>
       </div>
 
-      {/* export */}
       {parsedExpenses.length > 0 && (
         <div className="flex gap-2 mt-4 mb-20">
           <button 
@@ -355,7 +339,6 @@ export default function GroupPage() {
         </div>
       )}
 
-      {/* FAB for adding expense */}
       <motion.div 
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}

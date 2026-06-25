@@ -23,7 +23,6 @@ app.add_middleware(
 def read_root():
     return {"status": "ok", "message": "SplitSmart API is running!"}
 
-# Groups
 
 @app.post("/groups", response_model=schemas.Group)
 def create_group(group: schemas.GroupCreate, db: Session = Depends(database.get_db)):
@@ -63,7 +62,6 @@ def add_member(group_id: str, member: schemas.MemberCreate, db: Session = Depend
     db.refresh(db_member)
     return db_member
 
-# Expenses
 
 @app.get("/groups/{group_id}/expenses", response_model=List[schemas.Expense])
 def get_expenses(group_id: str, db: Session = Depends(database.get_db)):
@@ -85,7 +83,6 @@ def add_expense(group_id: str, expense: schemas.ExpenseCreate, db: Session = Dep
     db.refresh(db_expense)
     return db_expense
 
-# Settlements
 
 @app.get("/groups/{group_id}/settlements", response_model=List[schemas.Settlement])
 def get_settlements(group_id: str, db: Session = Depends(database.get_db)):

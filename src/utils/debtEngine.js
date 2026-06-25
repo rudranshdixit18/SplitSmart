@@ -1,13 +1,10 @@
-// Debt simplification engine
-// Uses a greedy algorithm to minimize number of transactions
-// Worst case: N-1 txns instead of N*(N-1)/2
 
 export function calcBalances(expenses, settlements, members) {
   // init everyone to 0
   const bal = {}
   members.forEach(m => { bal[m.id] = 0 })
 
-  // process expenses
+
   for (const exp of expenses) {
     // payer is owed the total split amount
     const splits = exp.splits || {}
@@ -21,7 +18,7 @@ export function calcBalances(expenses, settlements, members) {
     bal[exp.paidBy] = (bal[exp.paidBy] || 0) + totalSplit
   }
 
-  // adjust for settled settlements
+
   for (const s of settlements) {
     if (s.status !== 'settled') continue
     bal[s.from] = (bal[s.from] || 0) + s.amount   // from paid, so gets credit
@@ -32,7 +29,7 @@ export function calcBalances(expenses, settlements, members) {
 }
 
 export function simplifyDebts(balanceMap) {
-  // separate into creditors and debtors
+
   const creds = [] // ppl who are owed money (positive balance)
   const debts = [] // ppl who owe money (negative balance)
 
@@ -43,7 +40,7 @@ export function simplifyDebts(balanceMap) {
     else if (rounded < 0) debts.push({ id, amt: Math.abs(rounded) })
   }
 
-  // sort descending by amount — greedy: match biggest first
+
   creds.sort((a, b) => b.amt - a.amt)
   debts.sort((a, b) => b.amt - a.amt)
 
@@ -66,7 +63,7 @@ export function simplifyDebts(balanceMap) {
     debts[i].amt -= amt
     creds[j].amt -= amt
 
-    // move pointer if someone is fully settled
+
     if (debts[i].amt < 0.01) i++
     if (creds[j].amt < 0.01) j++
   }

@@ -14,9 +14,7 @@ const getCategoryIcon = (cat) => {
   }
 }
 
-// single expense row in a list
 const ExpenseRow = ({ expense, members }) => {
-  // resolve paidBy to a name
   const payer = members.find(m => m.id === expense.paidBy)
   const payerName = payer ? payer.name : 'Someone'
 
@@ -27,7 +25,7 @@ const ExpenseRow = ({ expense, members }) => {
       transition={{ type: 'spring', stiffness: 400, damping: 25 }}
       style={{ perspective: 1000 }}
     >
-      <div className="w-11 h-11 rounded-lg flex items-center justify-center shrink-0 mr-3.5 emoji">
+      <div className="w-11 h-11 rounded-lg flex items-center justify-center shrink-0 mr-3.5 icon">
         {getCategoryIcon(expense.category)}
       </div>
       <div className="flex-1 min-w-0">

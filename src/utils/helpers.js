@@ -1,4 +1,3 @@
-// misc utility functions
 
 export function genId() {
   return 'x' + Math.random().toString(36).substr(2, 9)
@@ -33,7 +32,6 @@ export function makeUpiLink({ upiId, name, amount, note }) {
   return `upi://pay?pa=${upiId}&pn=${encodeURIComponent(name || '')}&am=${amount}&cu=INR&tn=${encodeURIComponent(note || '')}`
 }
 
-// download expenses as csv
 export function downloadCSV(expenses, members) {
   const memberMap = {}
   members.forEach(m => { memberMap[m.id] = m.name })
@@ -57,8 +55,6 @@ export function downloadCSV(expenses, members) {
   URL.revokeObjectURL(url)
 }
 
-// pdf export - opens a print dialog with formatted expense table
-// no external lib needed, just render html and print
 export function downloadPDF(expenses, members, groupName) {
   const memberMap = {}
   members.forEach(m => { memberMap[m.id] = m.name })
@@ -97,7 +93,6 @@ export function downloadPDF(expenses, members, groupName) {
     </body></html>
   `
 
-  // open in new window and trigger print
   const w = window.open('', '_blank', 'width=800,height=600')
   if (w) {
     w.document.write(html)

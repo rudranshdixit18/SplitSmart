@@ -21,7 +21,6 @@ async function _fetch(endpoint, options = {}) {
   }
 }
 
-// --- Groups ---
 
 export async function getGroups() {
   return await _fetch('/groups') || [];
@@ -63,7 +62,6 @@ export async function addMemberToGroup(groupId, member) {
   });
 }
 
-// --- Expenses ---
 
 export async function getExpenses(groupId) {
   if (!groupId) return [];
@@ -86,7 +84,6 @@ export async function removeExpense(id) {
   console.log("Delete expense not supported yet");
 }
 
-// --- Settlements ---
 
 export async function getSettlements(groupId) {
   if (!groupId) return [];

@@ -97,7 +97,7 @@ export default function History() {
       </Link>
       <h1 className="text-2xl font-extrabold mb-6 text-text">Expense History</h1>
 
-      {/* stats */}
+
       <div className="flex gap-2 mb-6">
         <div className="flex-1 bg-card border border-glass-border p-3 rounded-xl text-center shadow-sm">
           <div className="font-bold text-lg text-text mb-0.5">{fmtMoney(totalSpent)}</div>
@@ -113,7 +113,7 @@ export default function History() {
         </div>
       </div>
 
-      {/* search */}
+
       <div className="relative mb-3">
         <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted">
           <Search size={18} />
@@ -127,7 +127,7 @@ export default function History() {
         />
       </div>
 
-      {/* filters */}
+
       <div className="flex gap-2 mb-4">
         <select 
           className="input !py-2.5 !text-sm"
@@ -156,7 +156,7 @@ export default function History() {
         </select>
       </div>
 
-      {/* period tabs */}
+
       <div className="flex bg-card p-1 rounded-xl mb-6 border border-glass-border relative">
         {FILTER_PERIODS.map(p => (
           <button
@@ -176,10 +176,10 @@ export default function History() {
         ))}
       </div>
 
-      {/* expense list */}
+
       {filtered.length === 0 ? (
         <div className="empty-state mt-4">
-          <div className="empty-emoji">
+          <div className="empty-icon">
             <SearchX size={48} strokeWidth={1.5} />
           </div>
           <p className="text-text font-medium text-lg">No expenses found</p>
@@ -196,7 +196,7 @@ export default function History() {
         </motion.div>
       )}
 
-      {/* export */}
+
       {parsedExpenses.length > 0 && (
         <div className="flex gap-2 mt-6">
           <button

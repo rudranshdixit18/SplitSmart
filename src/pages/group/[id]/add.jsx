@@ -19,8 +19,8 @@ export default function AddExpense() {
   const [date, setDate] = useState('')
   const [paidBy, setPaidBy] = useState('')
   const [splitType, setSplitType] = useState('equal')
-  const [splitAmong, setSplitAmong] = useState([]) // member ids who are part of split
-  const [splitValues, setSplitValues] = useState({}) // memberId -> value (%, amount, or shares)
+  const [splitAmong, setSplitAmong] = useState([])
+  const [splitValues, setSplitValues] = useState({})
   const [isRecurring, setIsRecurring] = useState(false)
   const [recurFreq, setRecurFreq] = useState('monthly')
   const [error, setError] = useState('')
@@ -247,7 +247,7 @@ export default function AddExpense() {
           </select>
         </div>
 
-        {/* split type selector */}
+
         <div>
           <label className="block text-xs font-bold text-text-muted uppercase mb-1.5 ml-1 tracking-wider">Split Type</label>
           <div className="flex bg-card p-1 rounded-xl mb-3 border border-glass-border relative">
@@ -271,7 +271,7 @@ export default function AddExpense() {
           </div>
         </div>
 
-        {/* member selection for split */}
+
         <div>
           <label className="block text-xs font-bold text-text-muted uppercase mb-1.5 ml-1 tracking-wider">Split Among</label>
           <div className="flex flex-col gap-2 mb-3">
@@ -295,7 +295,7 @@ export default function AddExpense() {
                 </div>
                 <span className="text-sm font-semibold text-text">{m.name}</span>
 
-                {/* show input for non-equal splits */}
+
                 {splitType !== 'equal' && splitAmong.includes(m.id) && (
                   <input
                     className="ml-auto w-[90px] bg-background border border-glass-border text-text rounded-lg p-2 text-sm focus:outline-none focus:border-primary text-right"
@@ -313,7 +313,7 @@ export default function AddExpense() {
           </div>
         </div>
 
-        {/* recurring */}
+
         <div 
           className="flex items-center gap-3 bg-card border border-glass-border p-3 rounded-xl cursor-pointer hover:bg-card-hover transition-colors" 
           onClick={() => setIsRecurring(!isRecurring)}
