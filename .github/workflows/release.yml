@@ -26,14 +26,14 @@ jobs:
       - name: Build Next.js app
         run: npm run build
 
-      - name: Sync Capacitor
-        run: npx cap sync android
-
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
+
+      - name: Sync Capacitor
+        run: npx cap sync android
 
       - name: Build APK
         working-directory: android
