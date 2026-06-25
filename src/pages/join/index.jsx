@@ -1,111 +1,93 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
-import { getGroups, saveGroup } from '../../utils/store'
-import { genId } from '../../utils/helpers'
+import { getGroup, addMemberToGroup } from '../../utils/api'
 
 export default function JoinGroup() {
   const router = useRouter()
-  const { code: urlCode } = router.query
-  
   const [code, setCode] = useState('')
   const [name, setName] = useState('')
-  const [upiId, setUpiId] = useState('')
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  // if code comes from URL, prefill
-  useEffect(() => {
-    if (urlCode) setCode(urlCode.toUpperCase())
-  }, [urlCode])
-
-  const onSubmit = (e) => {
-    e.preventDefault()
-    setError('')
-
+  const handleJoin = async () => {
     if (!code.trim()) {
-      setError('Enter an invite code')
+      setError("Invite code is required")
       return
     }
     if (!name.trim()) {
-      setError('Enter your name')
+      setError("Your name is required")
       return
     }
 
-    // find the group
-    const groups = getGroups()
-    const group = groups.find(g => g.code === code.trim().toUpperCase())
-    
-    if (!group) {
-      setError('No group found with that code 😕')
-      return
+    setLoading(true)
+    setError('')
+
+    try {
+      // Find group by code. In our backend, get_group checks id first, then code.
+      const group = await getGroup(code.trim().toUpperCase())
+      
+      if (!group) {
+        setError("Invalid invite code")
+        setLoading(false)
+        return
+      }
+
+      // hackathon random id
+      const memberId = `m_${Date.now()}`
+      
+      await addMemberToGroup(group.id, {
+        id: memberId,
+        name: name.trim()
+      })
+
+      router.push(`/group/${group.id}`)
+    } catch (err) {
+      setError("An error occurred. Please try again.")
+      setLoading(false)
     }
-
-    // check if name already exists (simple dupe check)
-    if (group.members.some(m => m.name.toLowerCase() === name.trim().toLowerCase())) {
-      setError('Someone with that name is already in the group')
-      return
-    }
-
-    // add member
-    group.members.push({
-      id: genId(),
-      name: name.trim(),
-      upiId: upiId.trim() || ''
-    })
-
-    saveGroup(group)
-    router.push(`/group/${group.id}`)
   }
 
   return (
     <div className="p-4 max-w-lg mx-auto">
-      <Link href="/" className="inline-block text-text-muted hover:text-text mb-4">← Back</Link>
-      <h1 className="text-2xl font-bold mb-1">Join Group</h1>
-      <p className="text-text-muted text-sm mb-6">Enter the invite code shared by your friend</p>
+      <Link href="/" className="inline-block text-text-muted hover:text-text mb-4 text-sm font-medium">← Back to Home</Link>
+      <h1 className="text-2xl font-bold mb-6 text-text">Join Group</h1>
 
-      <form onSubmit={onSubmit} className="flex flex-col gap-4">
+      <div className="space-y-4">
         <div>
-          <label className="block text-xs font-bold text-text-muted uppercase mb-1.5 ml-1 tracking-wider">Invite Code</label>
+          <label className="block text-sm font-bold text-text-muted mb-1.5 uppercase tracking-wider">Invite Code</label>
           <input
-            className="w-full bg-card border border-border text-text rounded-xl p-3 focus:outline-none focus:border-primary text-center font-mono text-xl tracking-widest uppercase"
+            className="w-full bg-card border border-border text-text rounded-xl p-3 font-mono uppercase focus:outline-none focus:border-primary placeholder:text-text-muted placeholder:font-sans"
             type="text"
-            placeholder="ABC123"
+            placeholder="e.g. X7B9A2"
             value={code}
-            onChange={e => setCode(e.target.value.toUpperCase())}
-            maxLength={6}
+            onChange={e => setCode(e.target.value)}
           />
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-text-muted uppercase mb-1.5 ml-1 tracking-wider">Your Name</label>
+          <label className="block text-sm font-bold text-text-muted mb-1.5 uppercase tracking-wider">Your Name</label>
           <input
-            className="w-full bg-card border border-border text-text rounded-xl p-3 focus:outline-none focus:border-primary"
+            className="w-full bg-card border border-border text-text rounded-xl p-3 focus:outline-none focus:border-primary placeholder:text-text-muted"
             type="text"
-            placeholder="Your name"
+            placeholder="What should people call you?"
             value={name}
             onChange={e => setName(e.target.value)}
           />
         </div>
 
-        <div>
-          <label className="block text-xs font-bold text-text-muted uppercase mb-1.5 ml-1 tracking-wider">Your UPI ID (optional)</label>
-          <input
-            className="w-full bg-card border border-border text-text rounded-xl p-3 focus:outline-none focus:border-primary"
-            type="text"
-            placeholder="you@upi"
-            value={upiId}
-            onChange={e => setUpiId(e.target.value)}
-          />
-        </div>
-
         {error && (
-          <p className="text-danger text-sm mb-2">{error}</p>
+          <p className="text-danger text-sm font-medium">{error}</p>
         )}
+      </div>
 
-        <button type="submit" className="w-full bg-primary text-white text-center py-3.5 rounded-xl font-bold hover:bg-primary-light transition-colors mt-2">
-          Join Group ✨
-        </button>
-      </form>
+      <button
+        className={`w-full bg-primary text-white py-3.5 rounded-xl font-bold mt-8 shadow-lg hover:bg-primary-light hover:-translate-y-0.5 transition-all ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+        onClick={handleJoin}
+        disabled={loading}
+      >
+        {loading ? 'Joining...' : 'Join Group 🤝'}
+      </button>
     </div>
   )
 }

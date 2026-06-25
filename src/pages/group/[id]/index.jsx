@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
-import { getGroup, getExpenses, getSettlements, saveSettlement, updateSettlement } from '../../../utils/store'
+import { getGroup, getExpenses, getSettlements, saveSettlement, updateSettlement } from '../../../utils/api'
 import { calcBalances, simplifyDebts } from '../../../utils/debtEngine'
-import { fmtMoney, genId, makeUpiLink, downloadCSV, downloadPDF } from '../../../utils/helpers'
+import { fmtMoney, makeUpiLink, downloadCSV, downloadPDF } from '../../../utils/helpers'
 import MemberBalance from '../../../components/MemberBalance'
 import ExpenseRow from '../../../components/ExpenseRow'
 
@@ -15,35 +15,55 @@ export default function GroupPage() {
   const [settlements, setSettlements] = useState([])
   const [activeTab, setActiveTab] = useState('balances')
   const [toast, setToast] = useState('')
+  const [loading, setLoading] = useState(true)
 
-  // load data
-  useEffect(() => {
+  const loadData = async () => {
     if (!id) return
-    const g = getGroup(id)
+    const g = await getGroup(id)
     if (!g) {
       router.push('/')
       return
     }
     setGroup(g)
-    setExpenses(getExpenses(id))
-    setSettlements(getSettlements(id))
+    
+    // fetch expenses and settlements in parallel
+    const [exp, setts] = await Promise.all([
+      getExpenses(id),
+      getSettlements(id)
+    ])
+    
+    setExpenses(exp)
+    setSettlements(setts)
+    setLoading(false)
+  }
+
+  // load data
+  useEffect(() => {
+    loadData()
   }, [id])
 
   // refresh data when we come back from adding expense
   useEffect(() => {
     if (!id) return
     const handleFocus = () => {
-      setExpenses(getExpenses(id))
-      setSettlements(getSettlements(id))
+      loadData()
     }
     window.addEventListener('focus', handleFocus)
     return () => window.removeEventListener('focus', handleFocus)
   }, [id])
 
+  if (loading) return <div className="text-center text-text-muted mt-8">Loading group...</div>
   if (!group) return null
 
-  const members = group.members
-  const balances = calcBalances(expenses, settlements, members)
+  const members = group.members || []
+  
+  // ensure split_details is parsed if it comes from backend as a string
+  const parsedExpenses = expenses.map(e => ({
+    ...e,
+    splitDetails: typeof e.split_details === 'string' ? JSON.parse(e.split_details || '{}') : (e.split_details || {})
+  }))
+  
+  const balances = calcBalances(parsedExpenses, settlements, members)
   const debts = simplifyDebts(balances)
 
   // pending settlements
@@ -64,29 +84,28 @@ export default function GroupPage() {
     })
   }
 
-  function handleMarkSettled(debt) {
+  async function handleMarkSettled(debt) {
+    const settlementId = `s_${Date.now()}`
     const settlement = {
-      id: genId(),
+      id: settlementId,
       groupId: group.id,
       from: debt.from,
       to: debt.to,
       amount: debt.amount,
       status: 'settled',
-      settledAt: new Date().toISOString(),
-      createdAt: new Date().toISOString()
     }
-    saveSettlement(settlement)
-    setSettlements(getSettlements(id))
+    await saveSettlement(settlement)
+    loadData()
     showToast('Marked as settled ✓')
   }
 
   function handleExport() {
-    downloadCSV(expenses, members)
+    downloadCSV(parsedExpenses, members)
     showToast('CSV downloaded!')
   }
 
   function handleExportPDF() {
-    downloadPDF(expenses, members, group.name)
+    downloadPDF(parsedExpenses, members, group.name)
   }
 
   // get member name from id
@@ -101,7 +120,7 @@ export default function GroupPage() {
     return m ? m.upiId : ''
   }
 
-  const recentExpenses = [...expenses].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5)
+  const recentExpenses = [...parsedExpenses].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5)
 
   const tabs = ['balances', 'expenses', 'settle']
 
@@ -171,12 +190,12 @@ export default function GroupPage() {
               {recentExpenses.map(exp => (
                 <ExpenseRow key={exp.id} expense={exp} members={members} />
               ))}
-              {expenses.length > 5 && (
+              {parsedExpenses.length > 5 && (
                 <Link 
                   href={`/group/${id}/history`}
                   className="block text-center text-[#6c5ce7] text-sm mt-2 p-2 hover:underline"
                 >
-                  View all {expenses.length} expenses →
+                  View all {parsedExpenses.length} expenses →
                 </Link>
               )}
             </div>
@@ -294,7 +313,7 @@ export default function GroupPage() {
       </div>
 
       {/* export */}
-      {expenses.length > 0 && (
+      {parsedExpenses.length > 0 && (
         <div className="flex gap-2 mt-4">
           <button 
             className="flex-1 bg-transparent border border-border text-text py-2 rounded-xl text-sm font-semibold hover:bg-card-hover transition-colors"

@@ -1,14 +1,18 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { getGroups } from '../utils/store'
+import { getGroups } from '../utils/api'
 
 function Home() {
   const [groups, setGroups] = useState([])
+  const [loading, setLoading] = useState(true)
   const router = useRouter()
 
   useEffect(() => {
-    setGroups(getGroups())
+    getGroups().then(data => {
+      setGroups(data || [])
+      setLoading(false)
+    })
   }, [])
 
   return (
@@ -31,7 +35,9 @@ function Home() {
         </Link>
       </div>
 
-      {groups.length === 0 ? (
+      {loading ? (
+        <div className="text-center text-text-muted mt-8">Loading groups...</div>
+      ) : groups.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 px-4 text-center bg-card rounded-2xl border border-border mt-4">
           <span className="text-5xl mb-4">🎉</span>
           <p className="text-text font-medium">No groups yet!</p>
@@ -51,7 +57,7 @@ function Home() {
               >
                 <div className="font-bold text-lg text-text mb-1">{group.name}</div>
                 <div className="flex justify-between items-center text-sm text-text-muted">
-                  <span>{group.members.length} member{group.members.length !== 1 ? 's' : ''}</span>
+                  <span>{group.members?.length || 0} member{(group.members?.length || 0) !== 1 ? 's' : ''}</span>
                   <span className="bg-[#2d2d44] text-[#a29bfe] px-2 py-0.5 rounded font-mono text-xs">{group.code}</span>
                 </div>
               </div>

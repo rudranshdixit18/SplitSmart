@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
-import { getGroup, getExpenses } from '../../../utils/store'
+import { getGroup, getExpenses } from '../../../utils/api'
 import { fmtMoney, downloadCSV, downloadPDF } from '../../../utils/helpers'
 import ExpenseRow from '../../../components/ExpenseRow'
 
@@ -20,21 +20,33 @@ export default function History() {
   const [catFilter, setCatFilter] = useState('all')
   const [paidByFilter, setPaidByFilter] = useState('all')
   const [periodFilter, setPeriodFilter] = useState('all')
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!id) return
-    const g = getGroup(id)
-    setGroup(g)
-    if (g) {
-      setExpenses(getExpenses(id))
+    const loadData = async () => {
+      const g = await getGroup(id)
+      setGroup(g)
+      if (g) {
+        const exps = await getExpenses(id)
+        setExpenses(exps)
+      }
+      setLoading(false)
     }
+    loadData()
   }, [id])
 
   const members = group?.members || []
 
+  // ensure split_details is parsed if it comes from backend as a string
+  const parsedExpenses = useMemo(() => expenses.map(e => ({
+    ...e,
+    splitDetails: typeof e.split_details === 'string' ? JSON.parse(e.split_details || '{}') : (e.split_details || {})
+  })), [expenses])
+
   // filter logic
   const filtered = useMemo(() => {
-    let result = [...expenses]
+    let result = [...parsedExpenses]
 
     // search
     if (search.trim()) {
@@ -70,7 +82,7 @@ export default function History() {
     // sort newest first
     result.sort((a, b) => new Date(b.date) - new Date(a.date))
     return result
-  }, [expenses, search, catFilter, paidByFilter, periodFilter])
+  }, [parsedExpenses, search, catFilter, paidByFilter, periodFilter])
 
   // stats
   const totalSpent = filtered.reduce((sum, e) => sum + e.amount, 0)
@@ -78,7 +90,8 @@ export default function History() {
   // for now just show total / member count as rough estimate
   const avgPerPerson = members.length > 0 ? totalSpent / members.length : 0
 
-  if (!group) return <div className="p-4 max-w-lg mx-auto"><p className="text-text-muted">Loading...</p></div>
+  if (loading) return <div className="p-4 max-w-lg mx-auto"><p className="text-text-muted text-center mt-8">Loading history...</p></div>
+  if (!group) return <div className="p-4 max-w-lg mx-auto"><p className="text-text-muted">Group not found.</p></div>
 
   return (
     <div className="p-4 max-w-lg mx-auto">
@@ -171,17 +184,17 @@ export default function History() {
       )}
 
       {/* export */}
-      {expenses.length > 0 && (
+      {parsedExpenses.length > 0 && (
         <div className="flex gap-2 mt-4">
           <button
             className="flex-1 bg-transparent border border-border text-text py-2.5 rounded-xl text-sm font-semibold hover:bg-card-hover transition-colors"
-            onClick={() => downloadCSV(expenses, members)}
+            onClick={() => downloadCSV(parsedExpenses, members)}
           >
             📥 CSV
           </button>
           <button
             className="flex-1 bg-transparent border border-border text-text py-2.5 rounded-xl text-sm font-semibold hover:bg-card-hover transition-colors"
-            onClick={() => downloadPDF(expenses, members, group.name)}
+            onClick={() => downloadPDF(parsedExpenses, members, group.name)}
           >
             📄 PDF
           </button>

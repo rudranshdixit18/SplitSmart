@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
-import { getGroup, saveExpense } from '../../../utils/store'
-import { genId } from '../../../utils/helpers'
+import { getGroup, saveExpense } from '../../../utils/api'
 
 const CATEGORIES = ['food', 'travel', 'rent', 'utilities', 'entertainment', 'shopping', 'other']
 const SPLIT_TYPES = ['equal', 'percentage', 'exact', 'shares']
@@ -10,8 +9,8 @@ const SPLIT_TYPES = ['equal', 'percentage', 'exact', 'shares']
 export default function AddExpense() {
   const router = useRouter()
   const { id } = router.query
-  const [group, setGroup] = useState(null)
 
+  const [group, setGroup] = useState(null)
   const [desc, setDesc] = useState('')
   const [amount, setAmount] = useState('')
   const [category, setCategory] = useState('food')
@@ -23,6 +22,7 @@ export default function AddExpense() {
   const [isRecurring, setIsRecurring] = useState(false)
   const [recurFreq, setRecurFreq] = useState('monthly')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     // only run once we have the ID (next router query can be empty on first render)
@@ -30,20 +30,21 @@ export default function AddExpense() {
 
     setDate(new Date().toISOString().split('T')[0])
     
-    const g = getGroup(id)
-    if (!g) {
-      router.push('/')
-      return
-    }
-    setGroup(g)
-    setPaidBy(g.members[0]?.id || '')
-    // default: everyone is in the split
-    const allIds = g.members.map(m => m.id)
-    setSplitAmong(allIds)
-    // init split values
-    const vals = {}
-    g.members.forEach(m => { vals[m.id] = '' })
-    setSplitValues(vals)
+    getGroup(id).then(g => {
+      if (!g) {
+        router.push('/')
+        return
+      }
+      setGroup(g)
+      setPaidBy(g.members[0]?.id || '')
+      // default: everyone is in the split
+      const allIds = g.members.map(m => m.id)
+      setSplitAmong(allIds)
+      // init split values
+      const vals = {}
+      g.members.forEach(m => { vals[m.id] = '' })
+      setSplitValues(vals)
+    })
   }, [id])
 
   if (!group) return null
@@ -113,7 +114,7 @@ export default function AddExpense() {
     return splits
   }
 
-  function handleSubmit(ev) {
+  const handleSubmit = async (ev) => {
     ev.preventDefault()
     setError('')
 
@@ -151,8 +152,13 @@ export default function AddExpense() {
       return
     }
 
+    setLoading(true)
+
+    // FastAPI expects splitDetails map (mapping string to number/float)
+    const splitDetails = splits;
+
     const expense = {
-      id: genId(),
+      id: `e_${Date.now()}`,
       groupId: id,
       desc: desc.trim(),
       amount: amt,
@@ -160,14 +166,13 @@ export default function AddExpense() {
       paidBy,
       splitType,
       splitAmong,
-      splits,
+      splitDetails, // Map to model field names
       date: new Date(date).toISOString(),
       isRecurring,
       recurFreq: isRecurring ? recurFreq : null
     }
 
-    saveExpense(expense)
-    // console.log('saved expense:', expense)
+    await saveExpense(expense)
     router.push(`/group/${id}`)
   }
 
@@ -330,8 +335,12 @@ export default function AddExpense() {
           <p className="text-[#e17055] text-[13px] mt-2 bg-[#e17055]/10 p-2 rounded-lg text-center font-medium">{error}</p>
         )}
 
-        <button type="submit" className="w-full bg-primary text-white text-center py-3.5 rounded-xl font-bold hover:bg-primary-light transition-colors mt-4">
-          Save Expense 💾
+        <button 
+          type="submit" 
+          className={`w-full bg-primary text-white text-center py-3.5 rounded-xl font-bold hover:bg-primary-light transition-colors mt-4 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+          disabled={loading}
+        >
+          {loading ? 'Saving...' : 'Save Expense 💾'}
         </button>
       </form>
     </div>
