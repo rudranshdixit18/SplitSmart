@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">SplitSmart</string>
+    <string name="title_activity_main">SplitSmart</string>
+    <string name="package_name">com.devfusion.splitsmart</string>
+    <string name="custom_url_scheme">com.devfusion.splitsmart</string>
+</resources>

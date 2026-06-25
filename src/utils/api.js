@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:8000';
+const API_URL = 'http://192.168.1.12:8000';
 
 async function _fetch(endpoint, options = {}) {
   try {
